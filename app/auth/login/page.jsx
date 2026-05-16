@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -37,13 +38,30 @@ const LoginPage = () => {
     y.set(0);
   };
 
+  const router = useRouter();
+
   const handleManualLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Manual login logic would go here
-    // For now, let's just simulate or use Google
-    setIsLoading(false);
-    alert("Manual login is coming soon! Please use Google Login for now.");
+    
+    try {
+      const res = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        throw new Error(res.error);
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -95,6 +113,7 @@ const LoginPage = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black rounded-2xl shadow-xl shadow-cyan-500/20"
               disabled={isLoading}
+              type="submit"
             >
               {isLoading ? "Authenticating..." : "Manual Access"}
             </motion.button>
@@ -110,6 +129,7 @@ const LoginPage = () => {
             whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
             whileTap={{ scale: 0.98 }}
             onClick={() => signIn('google', { callbackUrl: '/' })}
+            type="button"
             className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-white font-bold transition-all"
           >
             <svg width="20" height="20" viewBox="0 0 24 24">

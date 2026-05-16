@@ -1,204 +1,187 @@
 "use client";
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import React from "react";
+import PushupScrollSequence from "./PushupScrollSequence";
 
-// ── Icons (Raw SVGs for high fidelity) ───────────────────────────────────────
+const IsometricFeatureGallery = ({ features }) => {
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
 
-const TrackingIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-    <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
-  </svg>
-);
+  return (
+    <div className="relative w-full max-w-5xl mx-auto h-[500px] md:h-[600px] flex items-center justify-center [perspective:1500px] overflow-visible">
+      <div className="relative w-full h-full flex items-center justify-center [transform-style:preserve-3d]">
+        {features.map((feature, i) => {
+          const isHovered = hoveredIndex === i;
+          const isSomeHovered = hoveredIndex !== null;
+          
+          let dx = `calc(${(i - 1)} * clamp(80px, 12vw, 140px))`;
+          let dz = `${(1 - i) * 80}px`;
+          let rx = '15deg';
+          let ry = '-30deg';
+          let rz = '5deg';
+          let scale = '1';
+          let zIndex = 10 - i;
+          let opacity = 1;
 
-const GrowthIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" />
-  </svg>
-);
+          if (isSomeHovered) {
+            if (isHovered) {
+              dx = '0px';
+              dz = '150px';
+              rx = '0deg';
+              ry = '0deg';
+              rz = '0deg';
+              scale = '1.1';
+              zIndex = 50;
+            } else {
+              const distance = Math.abs(i - hoveredIndex);
+              const direction = i < hoveredIndex ? -1 : 1;
+              dx = `calc(${direction} * clamp(140px, 20vw, 240px))`;
+              dz = `${-100 - distance * 50}px`;
+              rx = '15deg';
+              ry = '-30deg';
+              rz = '5deg';
+              zIndex = 10 - distance;
+              opacity = 0.4;
+            }
+          }
 
-const CommunityIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
+          return (
+            <div
+              key={feature.title}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              className="absolute w-[280px] md:w-[320px] h-[380px] md:h-[420px] rounded-3xl cursor-pointer"
+              style={{
+                transform: `translateX(${dx}) translateZ(${dz}) rotateX(${rx}) rotateY(${ry}) rotateZ(${rz}) scale(${scale})`,
+                zIndex,
+                opacity,
+                transition: "all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                transformStyle: "preserve-3d"
+              }}
+            >
+              <div 
+                className={`absolute inset-0 rounded-3xl border transition-all duration-800 overflow-hidden flex flex-col
+                  ${isHovered 
+                    ? 'bg-[#111118]/95 border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.8)]' 
+                    : 'bg-[#111118]/60 border-white/5 shadow-[0_15px_35px_rgba(0,0,0,0.5)] backdrop-blur-md'}`}
+              >
+                {/* Background Glow */}
+                <div 
+                  className={`absolute inset-0 opacity-0 transition-opacity duration-800 pointer-events-none ${isHovered ? 'opacity-100' : ''}`}
+                  style={{ background: `radial-gradient(120% 120% at 50% 100%, ${feature.glow} 0%, transparent 100%)` }}
+                />
 
-// ── Components ───────────────────────────────────────────────────────────────
+                {/* Default State: Icon & Title */}
+                <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-800 ${isHovered ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}`}>
+                  <div 
+                    className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-5xl font-black mb-8 shadow-[inset_0_2px_8px_rgba(255,255,255,0.4),0_8px_16px_rgba(0,0,0,0.4)]"
+                    style={{ background: feature.gradient }}
+                  >
+                    <span className="drop-shadow-lg">{feature.icon}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white text-center tracking-tight" style={{ fontFamily: "'Inter', 'Poppins', sans-serif" }}>
+                    {feature.title}
+                  </h3>
+                </div>
 
-const FeatureCard = ({ title, description, icon: Icon, gradient }) => (
-  <motion.div
-    whileHover={{ y: -10, scale: 1.02 }}
-    className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-8 flex flex-col gap-4 shadow-2xl"
-  >
-    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg ${gradient}`}>
-      <Icon />
+                {/* Hovered State: Full Information */}
+                <div className={`absolute inset-0 flex flex-col justify-center p-8 md:p-10 transition-all duration-800 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12 pointer-events-none'}`}>
+                  <div 
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl font-black mb-8 shadow-[inset_0_2px_8px_rgba(255,255,255,0.4),0_8px_16px_rgba(0,0,0,0.4)]"
+                    style={{ background: feature.gradient }}
+                  >
+                    <span className="drop-shadow-lg">{feature.icon}</span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: "'Inter', 'Poppins', sans-serif" }}>
+                    {feature.title}
+                  </h3>
+                  <p className="text-[#A1A1AA] text-base md:text-lg leading-relaxed" style={{ fontFamily: "'Inter', 'Poppins', sans-serif" }}>
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-    <h3 className="text-xl font-black text-white">{title}</h3>
-    <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-  </motion.div>
-);
+  );
+};
 
+/**
+ * LandingPage — Scrollytelling experience for unauthenticated visitors.
+ * Wraps the PushupScrollSequence component and adds the final sections
+ * that appear after the scroll sequence ends.
+ * 
+ * IMPORTANT: Do NOT set overflow-x: hidden on any ancestor of the sticky canvas,
+ * as it breaks position: sticky behavior in all browsers.
+ */
 const LandingPage = () => {
   return (
-    <div className="relative w-full overflow-x-hidden">
-      
-      {/* ── SECTION 1: HERO ── */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-20 relative">
-        {/* Floating 3D elements (decorative) */}
-        <motion.div 
-          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-10 md:left-20 text-6xl opacity-20 blur-sm select-none"
-        >
-          💪
-        </motion.div>
-        <motion.div 
-          animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-1/4 right-10 md:right-20 text-6xl opacity-20 blur-sm select-none"
-        >
-          🔥
-        </motion.div>
+    <div style={{ background: "#0A0A0F" }}>
+      {/* ── The Main Scrollytelling Canvas Experience ── */}
+      <PushupScrollSequence />
 
-        <div className="max-w-4xl text-center z-10">
-          <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-5xl md:text-8xl font-black text-white tracking-tight leading-tight"
-          >
-            Master the <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-emerald-400 to-pink-500">
-              Pushup Challenge
-            </span>
-          </motion.h1>
-          
-          <motion.p 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-6 text-gray-400 text-lg md:text-xl font-medium max-w-2xl mx-auto"
-          >
-            Join thousands of fitness enthusiasts in the ultimate pushup challenge.
-            Track your progress, compete with friends, and transform your strength.
-          </motion.p>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Link href="/auth/login">
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-xl border-2 border-cyan-500 text-white font-black text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:bg-cyan-500/10 transition-all"
-              >
-                Login
-              </motion.button>
-            </Link>
-            <Link href="/auth/register">
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-pink-500 text-gray-900 font-black text-lg shadow-[0_10px_30px_rgba(236,72,153,0.3)]"
-              >
-                Deep Dive
-              </motion.button>
-            </Link>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 1 }}
-            className="mt-20 flex flex-col items-center gap-4 text-gray-500 text-sm font-bold uppercase tracking-widest"
-          >
-            <span>Scroll to explore</span>
-            <motion.div 
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+      {/* ── Post-scroll Feature Strip ── */}
+      <section className="relative z-20 py-[clamp(80px,10vw,128px)] px-4 bg-[#0A0A0F]">
+        <div className="max-w-[1024px] mx-auto">
+          <div className="text-center mb-[clamp(64px,8vw,80px)]">
+            <h2 
+              className="text-[clamp(1.75rem,5vw,3.5rem)] font-black text-white tracking-tight m-0 drop-shadow-[0_0_50px_rgba(6,182,212,0.2)]"
+              style={{ fontFamily: "'Inter', 'Poppins', sans-serif" }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m7 13 5 5 5-5" /><path d="m7 6 5 5 5-5" />
-              </svg>
-            </motion.div>
-          </motion.div>
+              Why{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 bg-clip-text text-transparent">
+                PushUp100
+              </span>
+              ?
+            </h2>
+            <p className="mt-4 text-gray-400 text-[clamp(0.8rem,1.5vw,1rem)] max-w-[480px] mx-auto" style={{ fontFamily: "'Inter', 'Poppins', sans-serif" }}>
+              Scientifically designed. AI-powered. Community-driven.
+            </p>
+          </div>
+
+          <IsometricFeatureGallery
+            features={[
+              {
+                icon: "✦",
+                title: "AI Form Tracking",
+                description: "Computer vision analyzes every rep for perfect form and maximum muscle engagement.",
+                gradient: "linear-gradient(135deg, #22D3EE, #0891B2)",
+                glow: "rgba(6,182,212,0.4)",
+              },
+              {
+                icon: "↗",
+                title: "Progressive Overload",
+                description: "Smart algorithms adapt your daily targets based on recovery and performance data.",
+                gradient: "linear-gradient(135deg, #34D399, #059669)",
+                glow: "rgba(52,211,153,0.4)",
+              },
+              {
+                icon: "⚔",
+                title: "Community Battles",
+                description: "Compete on leaderboards and challenge friends to push beyond their limits.",
+                gradient: "linear-gradient(135deg, #D946EF, #9333EA)",
+                glow: "rgba(192,38,211,0.4)",
+              },
+            ]}
+          />
         </div>
       </section>
 
-      {/* ── SECTION 2: FEATURES ── */}
-      <section className="py-24 px-4 relative">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-4">Why Choose Pushup Challenge?</h2>
-            <p className="text-gray-500 text-lg font-medium">Scientifically designed features to maximize your fitness journey</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard 
-              title="Real-Time Tracking"
-              description="Monitor your progress instantly with detailed metrics and performance analytics."
-              icon={TrackingIcon}
-              gradient="bg-emerald-500"
-            />
-            <FeatureCard 
-              title="Progressive Growth"
-              description="Build muscle strength systematically with science-backed training progressions."
-              icon={GrowthIcon}
-              gradient="bg-gradient-to-br from-emerald-400 to-pink-500"
-            />
-            <FeatureCard 
-              title="Community Challenges"
-              description="Compete with thousands of fitness enthusiasts and celebrate victories together."
-              icon={CommunityIcon}
-              gradient="bg-gradient-to-br from-pink-500 to-purple-600"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 3: CTA ── */}
-      <section className="py-32 px-4 relative">
-        <div className="max-w-4xl mx-auto bg-gray-900/60 backdrop-blur-2xl border border-white/10 rounded-[40px] p-12 md:p-20 text-center shadow-3xl">
-          <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Ready to Transform Your Strength?</h2>
-          <p className="text-gray-400 text-lg md:text-xl font-medium mb-12 max-w-2xl mx-auto">
-            Join the fitness revolution and start your pushup challenge today. 
-            Track progress, build community, achieve greatness.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/auth/login">
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-xl border-2 border-cyan-500 text-white font-black text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:bg-cyan-500/10 transition-all"
-              >
-                Login
-              </motion.button>
-            </Link>
-            <Link href="/auth/register">
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-pink-500 text-gray-900 font-black text-lg shadow-[0_10px_30px_rgba(236,72,153,0.3)]"
-              >
-                Deep Dive
-              </motion.button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-10 border-t border-white/5 text-center">
-        <p className="text-gray-600 text-sm font-medium">© 2026 Pushup Challenge App. All rights reserved.</p>
+      {/* ── Footer ── */}
+      <footer
+        style={{
+          position: "relative",
+          zIndex: 20,
+          padding: "40px 0",
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+          textAlign: "center",
+          background: "#0A0A0F",
+        }}
+      >
+        <p style={{ color: "#4B5563", fontSize: "0.875rem", fontWeight: 500, margin: 0 }}>
+          © 2026 PushUp100. Built for the relentless.
+        </p>
       </footer>
     </div>
   );
