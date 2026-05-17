@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@tailwindcss/postcss": "^4.1.12",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
@@ -22,7 +24,8 @@
     "next": "latest",
     "next-auth": "^4.24.14",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
