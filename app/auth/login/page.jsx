@@ -58,7 +58,7 @@ const LoginPage = () => {
         throw new Error(res.error);
       }
 
-      router.push('/');
+      router.push('/stats');
       router.refresh();
     } catch (error) {
       alert(error.message);
@@ -123,7 +123,7 @@ const LoginPage = () => {
           />
           
           {/* Inner Content */}
-          <div style={{ transform: "translateZ(40px)", transformStyle: "preserve-3d" }} className="relative z-10">
+          <div className="relative z-10">
             
             {/* Header */}
             <div className="mb-10 text-center">
@@ -184,7 +184,7 @@ const LoginPage = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => signIn('google', { callbackUrl: '/' })}
+              onClick={() => signIn('google', { callbackUrl: '/stats' })}
               type="button"
               className="w-full py-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center gap-3 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all"
             >
