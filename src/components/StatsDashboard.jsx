@@ -1,10 +1,20 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 
-// ─── Animation Variants ──────────────────────────────────────────────────────
+// Dynamically import 3D component to avoid SSR issues
+const Stats3DRing = dynamic(() => import('./3d/Stats3DRing'), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" />
+    </div>
+  )
+});
 
+// Animation Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -23,44 +33,52 @@ const cardVariants = {
   },
 };
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
+// Premium Stat Card Component
 const StatCard = ({ icon, label, value, unit, accentClass, glowColor, delay }) => (
   <motion.div
     variants={cardVariants}
     custom={delay}
-    className="relative flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden group hover:border-white/20 transition-all duration-300"
+    whileHover={{ y: -4, scale: 1.02 }}
+    className="relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-xl overflow-hidden group transition-all duration-500"
   >
-    {/* Background glow blob */}
-    <div
-      className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl rounded-2xl ${glowColor}`}
-    />
+    {/* Animated gradient border */}
+    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+    
+    {/* Background glow */}
+    <div className={`absolute -inset-4 opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-3xl rounded-full ${glowColor}`} />
+    
+    {/* Corner accents */}
+    <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-br-full opacity-50" />
+    <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-white/5 to-transparent rounded-tl-full opacity-30" />
 
-    {/* Decorative corner */}
-    <div className="absolute top-0 right-0 w-16 h-16 opacity-5">
-      <svg viewBox="0 0 64 64" fill="none">
-        <circle cx="64" cy="0" r="48" stroke="white" strokeWidth="2" />
-      </svg>
+    {/* Icon container */}
+    <div className={`relative z-10 w-14 h-14 rounded-2xl bg-gradient-to-br ${glowColor.replace('bg-', 'from-').replace('/10', '/20')} to-transparent flex items-center justify-center border border-white/10`}>
+      <span className="text-2xl">{icon}</span>
     </div>
 
-    <span className="relative z-10 text-2xl">{icon}</span>
-
     <div className="relative z-10 text-center">
-      <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">{label}</p>
-      <div className="flex items-baseline justify-center gap-1">
-        <span className={`text-3xl font-black tabular-nums ${accentClass}`}>
+      <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">{label}</p>
+      <div className="flex items-baseline justify-center gap-1.5">
+        <motion.span 
+          className={`text-4xl font-black tabular-nums ${accentClass}`}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', delay: delay * 0.1 }}
+        >
           {value}
-        </span>
+        </motion.span>
         {unit && (
-          <span className="text-gray-500 text-sm font-semibold">{unit}</span>
+          <span className="text-gray-500 text-sm font-bold uppercase">{unit}</span>
         )}
       </div>
     </div>
+    
+    {/* Bottom accent line */}
+    <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-full h-0.5 bg-gradient-to-r from-transparent ${glowColor.replace('bg-', 'via-').replace('/10', '/50')} to-transparent transition-all duration-500`} />
   </motion.div>
 );
 
-// ─── Heatmap Cell ─────────────────────────────────────────────────────────────
-
+// Heatmap Cell Component
 const HeatmapCell = ({ day, isCompleted, target }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -73,70 +91,65 @@ const HeatmapCell = ({ day, isCompleted, target }) => {
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: day * 0.004, duration: 0.25, ease: 'backOut' }}
-        whileHover={{ scale: 1.3, zIndex: 10 }}
-        className={`w-4 h-4 rounded-sm cursor-pointer transition-all duration-200 ${
+        transition={{ delay: day * 0.003, duration: 0.25, ease: 'backOut' }}
+        whileHover={{ scale: 1.4, zIndex: 20 }}
+        className={`w-3.5 h-3.5 rounded-[4px] cursor-pointer transition-all duration-300 ${
           isCompleted
-            ? 'bg-emerald-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-            : 'bg-gray-800 hover:bg-gray-700'
+            ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_0_12px_rgba(34,197,94,0.5)]'
+            : 'bg-gray-800/80 hover:bg-gray-700/80 border border-white/5'
         }`}
       />
 
       {/* Tooltip */}
       {showTooltip && (
-        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap pointer-events-none">
-          <div className="bg-gray-900 border border-gray-700 text-white text-[10px] font-semibold px-2 py-1 rounded-lg shadow-xl">
-            Day {day} · {target} reps
-            <span className={`ml-1 ${isCompleted ? 'text-emerald-400' : 'text-gray-500'}`}>
-              {isCompleted ? '✓' : '○'}
-            </span>
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 whitespace-nowrap pointer-events-none"
+        >
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white text-[10px] font-semibold px-3 py-2 rounded-xl shadow-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Day {day}</span>
+              <span className="text-white font-black">{target} reps</span>
+              <span className={`${isCompleted ? 'text-emerald-400' : 'text-gray-600'}`}>
+                {isCompleted ? 'Done' : 'Pending'}
+              </span>
+            </div>
           </div>
-          {/* Tooltip arrow */}
-          <div className="w-2 h-2 bg-gray-900 border-r border-b border-gray-700 rotate-45 mx-auto -mt-1" />
-        </div>
+          <div className="w-2 h-2 bg-gray-900/95 border-r border-b border-white/10 rotate-45 mx-auto -mt-1" />
+        </motion.div>
       )}
     </div>
   );
 };
 
-// ─── Main StatsDashboard Component ────────────────────────────────────────────
-
+// Main StatsDashboard Component
 const StatsDashboard = ({ pushupData = [], totalDays = 100 }) => {
-  // ── Data Calculations (memoized so they re-compute on every pushupData change) ──
-
   const stats = useMemo(() => {
     if (!pushupData || pushupData.length === 0) {
       return { totalReps: 0, currentStreak: 0, daysCompleted: 0, completionRate: 0 };
     }
 
-    // Total Push-ups: Sum targets of all completed days
     const totalReps = pushupData.reduce((acc, day) => {
       return day.isCompleted ? acc + (day.target || 0) : acc;
     }, 0);
 
-    // Days Completed
     const daysCompleted = pushupData.filter((d) => d.isCompleted).length;
-
-    // Completion Rate (%)
     const completionRate = Math.round((daysCompleted / totalDays) * 100);
 
-    // Current Streak: consecutive completed days starting from the most recent back.
-    // We look at days in order (day 1→100). The streak is consecutive completed from
-    // the start up to the first incomplete day (since this is a sequential challenge).
     let currentStreak = 0;
     const sorted = [...pushupData].sort((a, b) => a.day - b.day);
     for (const day of sorted) {
       if (day.isCompleted) {
         currentStreak++;
       } else {
-        break; // First gap breaks the streak
+        break;
       }
     }
 
     return { totalReps, currentStreak, daysCompleted, completionRate };
   }, [pushupData, totalDays]);
 
-  // Sort data for heatmap rendering
   const sortedData = useMemo(
     () => [...pushupData].sort((a, b) => a.day - b.day),
     [pushupData]
@@ -147,89 +160,149 @@ const StatsDashboard = ({ pushupData = [], totalDays = 100 }) => {
       initial={{ opacity: 0, y: 28 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut', delay: 0.3 }}
-      className="w-full max-w-4xl mt-8"
+      className="w-full max-w-5xl"
       aria-label="Real-Time Tracking Stats"
     >
-      {/* Glass container */}
-      <div className="bg-gray-900/60 backdrop-blur-md border border-gray-800/60 rounded-3xl p-6 md:p-8 shadow-2xl">
+      {/* Main container with premium glass effect */}
+      <div className="relative bg-gray-900/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-8 md:p-10 shadow-2xl overflow-hidden">
+        
+        {/* Background decorations */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+          style={{ 
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', 
+            backgroundSize: '40px 40px' 
+          }} 
+        />
 
         {/* Section Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-500 to-pink-500" />
-          <h2 className="text-white font-black text-base uppercase tracking-widest">
-            Real-Time Tracking
-          </h2>
-          {/* Live pulse indicator */}
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
+        <div className="relative flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-10 rounded-full bg-gradient-to-b from-purple-500 via-fuchsia-500 to-pink-500" />
+            <div>
+              <h2 className="text-white font-black text-xl tracking-tight">Performance Analytics</h2>
+              <p className="text-gray-500 text-xs font-medium mt-0.5">Real-time progress tracking</p>
+            </div>
+          </div>
+          
+          {/* Live indicator */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+            <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <span className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Live</span>
+            <span className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.15em]">Live Sync</span>
           </div>
         </div>
 
-        {/* ── Metric Cards ── */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
-        >
-          <StatCard
-            icon="⚡"
-            label="Current Streak"
-            value={stats.currentStreak}
-            unit="Days"
-            accentClass="text-amber-400"
-            glowColor="bg-amber-500/10"
-          />
-          <StatCard
-            icon="💪"
-            label="Total Reps"
-            value={stats.totalReps.toLocaleString()}
-            unit="Reps"
-            accentClass="text-purple-400"
-            glowColor="bg-purple-500/10"
-          />
-          <StatCard
-            icon="🎯"
-            label="Completion Rate"
-            value={stats.completionRate}
-            unit="%"
-            accentClass="text-cyan-400"
-            glowColor="bg-cyan-500/10"
-          />
-        </motion.div>
+        {/* Stats Grid with 3D Ring */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+          {/* Left side - 3D Progress Ring */}
+          <div className="lg:col-span-1 flex items-center justify-center">
+            <div className="relative w-full max-w-[280px] aspect-square">
+              <Suspense fallback={
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" />
+                </div>
+              }>
+                <Stats3DRing 
+                  progress={stats.completionRate} 
+                  color="#a855f7"
+                  className="w-full h-full"
+                />
+              </Suspense>
+              {/* Center text overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <motion.span 
+                  className="text-5xl font-black text-white"
+                  key={stats.completionRate}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                >
+                  {stats.completionRate}%
+                </motion.span>
+                <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Complete</span>
+              </div>
+            </div>
+          </div>
 
-        {/* ── Divider ── */}
-        <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mb-6" />
+          {/* Right side - Stat Cards */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4"
+          >
+            <StatCard
+              icon="⚡"
+              label="Current Streak"
+              value={stats.currentStreak}
+              unit="Days"
+              accentClass="text-amber-400"
+              glowColor="bg-amber-500/10"
+              delay={1}
+            />
+            <StatCard
+              icon="💪"
+              label="Total Reps"
+              value={stats.totalReps.toLocaleString()}
+              unit=""
+              accentClass="text-purple-400"
+              glowColor="bg-purple-500/10"
+              delay={2}
+            />
+            <StatCard
+              icon="🎯"
+              label="Days Done"
+              value={stats.daysCompleted}
+              unit={`/${totalDays}`}
+              accentClass="text-cyan-400"
+              glowColor="bg-cyan-500/10"
+              delay={3}
+            />
+          </motion.div>
+        </div>
 
-        {/* ── Consistency Heatmap ── */}
+        {/* Divider */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8" />
+
+        {/* Consistency Heatmap */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest">
-              100-Day Consistency Map
-            </p>
-            <div className="flex items-center gap-3 text-[10px] font-semibold text-gray-500">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.5)] inline-block" />
-                Done
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center border border-emerald-500/20">
+                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white text-sm font-bold">100-Day Consistency Map</p>
+                <p className="text-gray-600 text-[10px] uppercase tracking-widest">Visual progress tracker</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-[3px] bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                Completed
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-gray-800 inline-block" />
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-[3px] bg-gray-800 border border-white/5" />
                 Pending
               </span>
             </div>
           </div>
 
-          {/* Responsive heatmap grid: scrollable on very small screens */}
-          <div className="overflow-x-auto pb-1">
+          {/* Heatmap Grid */}
+          <div className="overflow-x-auto pb-2">
             <div
               className="grid gap-1.5"
               style={{
                 gridTemplateColumns: 'repeat(10, minmax(0, 1fr))',
-                minWidth: '220px',
+                minWidth: '240px',
               }}
             >
               {sortedData.map((dayItem) => (
@@ -243,13 +316,21 @@ const StatsDashboard = ({ pushupData = [], totalDays = 100 }) => {
             </div>
           </div>
 
-          {/* Mini progress summary under heatmap */}
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-gray-600 text-[10px] font-medium">Day 1</span>
-            <span className="text-gray-500 text-[10px] font-bold">
-              {stats.daysCompleted} / {totalDays} completed
-            </span>
-            <span className="text-gray-600 text-[10px] font-medium">Day {totalDays}</span>
+          {/* Progress bar summary */}
+          <div className="mt-6 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600 font-medium">Day 1</span>
+              <span className="text-gray-400 font-bold">{stats.daysCompleted} / {totalDays} days completed</span>
+              <span className="text-gray-600 font-medium">Day {totalDays}</span>
+            </div>
+            <div className="w-full h-2 bg-gray-800/50 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${stats.completionRate}%` }}
+                transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+              />
+            </div>
           </div>
         </div>
       </div>
