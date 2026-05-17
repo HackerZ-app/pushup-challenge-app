@@ -84,11 +84,12 @@ const RegisterPage = () => {
         throw new Error(signInRes.error);
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      if (signInRes?.ok) {
+        // Force a hard navigation to ensure session is properly established
+        window.location.href = '/dashboard';
+      }
     } catch (error) {
       alert(error.message);
-    } finally {
       setIsLoading(false);
     }
   };

@@ -58,11 +58,12 @@ const LoginPage = () => {
         throw new Error(res.error);
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      if (res?.ok) {
+        // Force a hard navigation to ensure session is properly established
+        window.location.href = '/dashboard';
+      }
     } catch (error) {
       alert(error.message);
-    } finally {
       setIsLoading(false);
     }
   };
