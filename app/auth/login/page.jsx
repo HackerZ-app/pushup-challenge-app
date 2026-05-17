@@ -58,7 +58,7 @@ const LoginPage = () => {
         throw new Error(res.error);
       }
 
-      router.push('/stats');
+      router.push('/dashboard');
       router.refresh();
     } catch (error) {
       alert(error.message);
@@ -184,7 +184,7 @@ const LoginPage = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => signIn('google', { callbackUrl: '/stats' })}
+              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
               type="button"
               className="w-full py-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center gap-3 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all"
             >
